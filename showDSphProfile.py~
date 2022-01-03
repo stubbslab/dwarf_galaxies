@@ -1,0 +1,309 @@
+import math 
+import numpy as np
+from AstronomicalParameterArchive import AstronomicalParameterArchive
+from DwarfGalDataArchive import DwarfGalDataArchive 
+from DwarfGalaxyParametersStorer import DwarfGalaxyParametersStorer
+from PotentialArchive import PotentialArchive
+from ObservedGalaxyStarData import ObservedGalaxyStarData
+from PotentialFunctionArray import PotentialFunctionArray
+from SurfaceBrightnessProfile import SurfaceBrightnessProfile
+from VisitedDsphMCMCPoint import VisitedDsphMCMCPoint
+from distributeRandomStars import distributeRandomStars 
+from logList import logList 
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
+from compRZLos import compRZLos 
+from ComputationalArchive import ComputationalArchive
+from GalaxyMask import GalaxyMask 
+
+
+#def showDSphProfiles(populations, pop_selection_methods = ['none'],  
+#                    apply_crowding_masking = [0], apply_observation_masking = [1], masking_fields = [[]], show_contours = [1], show_stars = [1], fields_of_interest = [[]],
+#                    withDisk = [0], disk_funct = [0], halo_funct = [0], return_prof = [0],
+#                    dist = ['none'], M = ['none'], vphi = ['none'], sigsqr = ['none'], figname = ['unnamed_dSph_profile.png'], save = [0], show = [1], colorbar = [0], 
+#                    el=[0.3], rs = [350], phi = [math.pi*0.0], theta = [math.pi * 0.0], halo_sym_axis = ['none'], c = [5.0], halo_center = [[0.0, 0.0, 0.0]], halo_edge_on = [0], 
+#                    lam=[0.1], zeta = [0.2], eps = [0.05], a = [math.pi*0.0], b = [math.pi*0.0, disk_sym_axis = 'none', disk_center = [0.0, 0.0, 0.0],  disk_edge_on = 0, 
+#                    x_lims_arcmin = [-40.3,35.05], y_lims_arcmin = [-48.2,34.05], outer_step_arcmin = 1.0, inner_step_arcmin = 1.0, inner_lim_factor = 0.0, disp_units = 'arcmin',
+#                    artificial_data = 0, artificial_parameters_storer = 'None',art_disk_funct = 0, art_halo_funct = 0, plot_title = None, figsize = (10,10))
+
+
+def plotAllFornaxPopulations(param_dicts, disk_functs, halo_functs, withDisks, titles, 
+                             pop_selection_method = 'metal_point', x_lims_arcmin = [-40.3,35.05], y_lims_arcmin =  [-48.2,34.05], n_xticks = 8, n_yticks = 8):
+    pops = ['MP','IM','MR']
+    f, axarr = plt.subplots(3, len(param_dicts), sharex = True, sharey = True, figsize = [2.0 * len(param_dicts), 2.0 * len(pops)  ])
+    plt.subplots_adjust(wspace = 0.0, hspace = 0.0)
+    x_ticks = np.around(np.linspace(x_lims_arcmin[0], x_lims_arcmin[1], n_xticks+1)[0:n_xticks] + (x_lims_arcmin[1] - x_lims_arcmin[0]) / (2.0 * (n_xticks + 1)), 1)
+    y_ticks = np.around(np.linspace(y_lims_arcmin[0], y_lims_arcmin[1], n_yticks+1)[0:n_yticks] + (y_lims_arcmin[1] - y_lims_arcmin[0]) / (2.0 * (n_yticks + 1)), 1) 
+    print 'x_ticks = ' + str(x_ticks)
+    print 'y_ticks = ' + str(y_ticks)
+    for i in range(len(pops)):
+        pop = pops[i]
+        for j in range(len(param_dicts)):
+            params = param_dicts[j]
+            disk_funct = disk_functs[j]
+            halo_funct = halo_functs[j]
+            withDisk = withDisks[j]
+            showDSphProfile(['fornax',pop], pop_selection_method = pop_selection_method, axarr = axarr, axarr_indeces = [i, j],
+                            apply_crowding_masking = 0, apply_observation_masking = 1, masking_fields = [], show_contours = 1, show_stars = 1, fields_of_interest = [],
+                            withDisk = withDisk, disk_funct = disk_funct, halo_funct = halo_funct, return_prof = 0,
+                            dist = params['dist'], M = params['M'], vphi = params['vphi'], sigsqr = 'none', save = 0, show = 0, colorbar = 0, 
+                            el=params['el'], rs = params['rs'], phi = params['phi'], theta = params['theta'],
+                            halo_sym_axis = 'none', c = params['c'], halo_center = [params['hx'], params['hy'], params['hz']], halo_edge_on = 0, 
+                            lam=params['lam'], zeta = params['zeta'], eps = params['eps'], a = params['a'], b = params['b'],
+                            disk_sym_axis = 'none', disk_center = [params['dx'], params['dy'], params['dz']],  disk_edge_on = 0, 
+                            x_lims_arcmin = x_lims_arcmin, y_lims_arcmin = y_lims_arcmin, outer_step_arcmin = 2.0, inner_step_arcmin = 1.0, inner_lim_factor = 0.0, disp_units = 'arcmin',
+                            artificial_data = 0, artificial_parameters_storer = 'None',art_disk_funct = 0, art_halo_funct = 0, plot_title = None, figsize = (10,10))
+            if j == 0:
+                axarr[i,j].set_ylabel(pop + ' population \n Dist. from dSph center \n parallel to Dec (amin)')
+                axarr[i,j].set_yticks(y_ticks)
+                axarr[i,j].set_yticklabels(np.around(y_ticks, 1), rotation = 45)
+            #else:
+            #    axarr[i,j].set_yticks(y_ticks)
+            #    axarr[i,j].set_yticklabels([])
+            if i == len(pops) -1:
+                axarr[i,j].set_xlabel('Dist. from dSph center \n parallel to RA (amin)')
+                axarr[i,j].set_xticks(x_ticks)
+                axarr[i,j].set_xticklabels(np.around(x_ticks, 1) , rotation = 45)
+            else:
+                axarr[i,j].set_xticks(x_ticks)
+                axarr[i,j].set_xticklabels([])
+            if i == 0:
+                axarr[i,j].set_title(titles[j])
+
+    plt.show() 
+
+def showDSphProfile(population, pop_selection_method = 'none', axarr = None, axarr_indeces = None, 
+                    apply_crowding_masking = 0, apply_observation_masking = 1, masking_fields = [], show_contours = 1, show_stars = 1, fields_of_interest = [],
+                    withDisk = 0, disk_funct = 0, halo_funct = 0, return_prof = 0,
+                    dist = 'none', M = 'none', vphi = 'none', sigsqr = 'none', save = 0, show = 1, colorbar = 0, 
+                    el=0.3, rs = 350, phi = math.pi*0.0, theta = math.pi * 0.0, halo_sym_axis = 'none', c = 5.0, halo_center = [0.0, 0.0, 0.0], halo_edge_on = 0, 
+                    lam=0.1, zeta = 0.2, eps = 0.05, a = math.pi*0.0, b = math.pi*0.0, disk_sym_axis = 'none', disk_center = [0.0, 0.0, 0.0],  disk_edge_on = 0, 
+                    x_lims_arcmin = [-40.3,35.05], y_lims_arcmin = [-48.2,34.05], outer_step_arcmin = 1.0, inner_step_arcmin = 1.0, inner_lim_factor = 0.0, disp_units = 'arcmin',
+                    artificial_data = 0, artificial_parameters_storer = 'None',art_disk_funct = 0, art_halo_funct = 0, plot_title = None, figsize = (10,10)):
+
+    dSph_archive = DwarfGalDataArchive ()
+    potential_archive = PotentialArchive()
+    computational_params_archive = ComputationalArchive() 
+    #disk_file = potential_archive.getDiskFile(lam)
+    #halo_file = potential_archive.getHaloFile(el)
+
+    astro_archive = AstronomicalParameterArchive ()
+    star_data = ObservedGalaxyStarData(population, pop_selection_method = pop_selection_method) 
+    sigsqr = star_data.sigSqr
+    sigsqrE = star_data.sigSqrE
+    fields = star_data.Field
+    #print 'sigsqr = ' + str(sigsqr)
+    #print 'sigsqrE = ' + str(sigsqrE)
+    #print 'different fields = '
+    #print set(fields) 
+    #print 'a 0 = ' + str(a)
+    #print 'b 0 = ' + str(b)
+    #print 'halo_center = '
+    #print halo_center 
+    #print 'disk_center = '
+    #print disk_center 
+    dsph_parameter_storer = DwarfGalaxyParametersStorer(population,withDisk=withDisk,
+                                                        dist = dist, M = M, vphi = vphi, sigsqr = sigsqr,
+                                                        el=el, rs = rs, phi = phi, theta = theta, halo_sym_axis = halo_sym_axis, c = c, halo_center = halo_center, halo_edge_on = halo_edge_on, 
+                                                        lam=lam, zeta = zeta, eps = eps, a = a, b = b, disk_sym_axis = disk_sym_axis, disk_center = disk_center, disk_edge_on = disk_edge_on  )
+    #print 'dsph_parameter_storer.halo_center = '
+    #print dsph_parameter_storer.halo_center 
+    #print 'dsph_parameter_storer.disk_center = '
+    #print dsph_parameter_storer.disk_center 
+    #print 'a 1 = ' + str(dsph_parameter_storer.a)
+    #print 'b 1 = ' + str(dsph_parameter_storer.b)
+    pop_of_interest = population[1] # can be 'MP', 'IM', 'MR'
+    colormap='b' if pop_of_interest == 'MP' else 'g' if pop_of_interest == 'IM' else 'r'
+    if pop_selection_method == 'none':
+        colormap = 'black'
+    if axarr is None: 
+        fig, axarr=plt.subplots(1, 1, figsize=figsize, squeeze = False)
+        axarr_indeces = [0,0]
+    #axarr[axarr_indeces[0],axarr_indeces[1]].set(adjustable='box-forced', aspect='equal')
+    #print 'NStars is ' + str(len(corr_dec_one_pop))
+
+        
+    if show_contours:
+        if not disk_funct: 
+            print 'Creating the disk_funct from file: ' + disk_file
+            disk_funct = PotentialFunctionArray(disk_file)
+        if not halo_funct:
+            print 'Creating the halo_funct from file: ' + halo_file
+            halo_funct = PotentialFunctionArray(halo_file)
+        print 'Halo and disk interpolating functions created. '
+
+    c = dsph_parameter_storer.c
+    dist = dsph_parameter_storer.dist
+    #print 'dist = ' + str(dist) 
+    rs = dsph_parameter_storer.rs
+    #print 'rs = ' + str(rs) 
+    gamma = astro_archive.getGamma()
+    deg_to_rad = astro_archive.getDegToRad()
+    #(param_indeces_to_vary, param_ranges, gauss_sampling_width) =  start_dsph_parameter_storer.getMCMCInfo()
+    #print 'start_dsph_parameter_storer.dist = ' + str(start_dsph_parameter_storer.dist)
+
+    arcmin_limits_R,arcmin_limits_z = dSph_archive.getObservationBounds(population,return_unit = 'arcmin')
+    #arcmin_limits_R = [-60.0, 60.0]
+    #arcmin_limits_z = [-60.0, 60.0]
+    arcmin_limits_los = [-60.0,60.0]
+
+    #Do you want to include "zoom in effect" on disk?  It might give more resolutions of disk,
+    # but it seems to give some computational challenges. 
+    #R,z,los_bins = compRZLos(zeta,zeta * outer_step_arcmin,outer_step_arcmin,arcmin_limits_R,arcmin_limits_z, arcmin_limits_los, rs, dist)
+    R, z, los_bins = compRZLos(1.0, 1.0 * outer_step_arcmin, outer_step_arcmin, arcmin_limits_R, arcmin_limits_z, arcmin_limits_los, rs, dist)
+    
+    #print 'R in arcmin = '
+    #print R * 180.0/math.pi*rs/dist*60.0
+    #print 'z in arcmin = '
+    #print z * 180.0/math.pi*rs/dist*60.0
+
+    #print 'R = '
+    #print R 
+    #print 'z = '
+    #print z
+    #print 'los_bins = '
+    #print los_bins 
+
+    if show_contours:
+        if apply_observation_masking:
+            masking_population = population
+        else:
+            masking_population = None
+        #print 'dsph_parameter_storer.sigsqr = ' + str(dsph_parameter_storer.sigsqr)
+        #print 'R = ' + str(R)
+        #print 'z = ' + str(z)
+        #print 'los_bins = ' + str(los_bins)
+        Rmesh_degrees, zmesh_degrees = np.meshgrid(R * (rs / dist) * (180.0 / math.pi), z * (rs / dist) * (180.0 / math.pi))
+        if apply_observation_masking: 
+            universal_observation_mask = GalaxyMask(Rmesh_degrees, zmesh_degrees, population[0], mask_types = ['n_vel_meas']).final_mask
+        else:
+            universal_observation_mask = np.zeros(np.shape(Rmesh_degrees)) + 1.0 
+        
+        dsph_brightness_profile = SurfaceBrightnessProfile(R, z, los_bins, gamma, dsph_parameter_storer,
+                                                                  disk_interpolating_function = disk_funct,
+                                                                  halo_interpolating_function = halo_funct,
+                                                                  observation_mask = universal_observation_mask, masking_fields = masking_fields )
+
+        if apply_crowding_masking:
+            crowding_mask = GalaxyMask(Rmesh_degrees, zmesh_degrees, 'fornax', mask_types = ['crowding'], probability_profile = new_profile)
+            dsph_brightness_profile.normalizeSurfaceProfile(crowding_mask.final_mask, renormalizing = 1)
+        
+        #zmesh,Rmesh=np.meshgrid(np.arange(min(dsph_brightness_profile.zlikeaxis)+ outer_step_arcmin / (2 * 5.0), max(dsph_brightness_profile.zlikeaxis) - outer_step_arcmin / (4 * 5.0),outer_step_arcmin / 5.0),
+        #                        np.arange(min(dsph_brightness_profile.Rlikeaxis)+ outer_step_arcmin / (2 * 5.0),max(dsph_brightness_profile.Rlikeaxis) - outer_step_arcmin / (4 * 5.0),outer_step_arcmin / 5.0))
+        Rmesh,zmesh = np.meshgrid(R,z)                         
+        #print 'zmesh = '
+        #print zmesh
+        #print 'Rmesh = '
+        #print Rmesh 
+        
+        surface_prob_mesh = dsph_brightness_profile.onSkyInterpolator((Rmesh,zmesh))
+        zmesh = zmesh*180.0/math.pi*rs/dist*60.0
+        Rmesh = Rmesh*180.0/math.pi*rs/dist*60.0
+   
+        #surface_prob_mesh = dsph_brightness_profile.surfaceProbDensity
+
+        #print surface_prob_mesh
+        max_prob = np.max(np.abs(surface_prob_mesh))
+        min_prob = np.min(np.abs(surface_prob_mesh))
+        if min_prob <= 0.0:
+            #print 'np.unique(np.abs(surface_prob_mesh).flatten()) = ' + str(np.unique(np.abs(surface_prob_mesh).flatten())) 
+            min_prob = np.partition(np.unique(np.abs(surface_prob_mesh).flatten()), 1)[1] 
+            #min_prob = min(10**-8,max_prob * 10**-8)
+        #print 'min_prob = '
+        #print min_prob
+        #print 'max_prob = '
+        #print max_prob
+        nlevels = 20
+        log_levels1=logList(min_prob,100.0,nlevels / 4)
+        log_levels2=logList(max_prob * 0.01,max_prob,3*nlevels/4)
+        #print 'log_levels1 = '
+        #print log_levels1
+        #print 'log_levels2 = '
+        #print log_levels2
+        #print type(log_levels1)
+        
+        #log_levels = np.union1d(log_levels1, log_levels2)
+        log_levels = logList(max_prob * 10.0 ** (-3.0), max_prob, nlevels)
+        test_levels = np.arange(min_prob,max_prob + (max_prob-min_prob)/(2.0 * 20.0) ,(max_prob-min_prob)/(20.0) )
+        #print 'surface_prob_mesh = '
+        # print surface_prob_mesh 
+        CS=axarr[axarr_indeces[0], axarr_indeces[1]].contour(Rmesh, zmesh, surface_prob_mesh, norm=LogNorm(),levels=log_levels)
+        if colorbar: 
+            CB_contour=axarr[axarr_indeces[0], axarr_indeces[1]].colorbar(shrink=0.8, extend='both', format='%.2e')
+
+    if artificial_data:
+        print 'Nstars = ' + str(len(star_data.corrRa))
+        if artificial_parameters_storer == 'None':
+            artificial_profile = dsph_brightness_profile
+        else:
+            art_disk_file = potential_archive.getDiskFile(artificial_parameters_storer.lam)
+            art_halo_file = potential_archive.getHaloFile(artificial_parameters_storer.el) 
+            artificial_parameters_storer.sigsqr = sigsqr
+            print 'artificial_parameters_storer.sigsqr = ' + str(artificial_parameters_storer.sigsqr) 
+            artificial_profile = SurfaceBrightnessProfile(R,z,los_bins,gamma,artificial_parameters_storer,art_disk_file,art_halo_file, disk_interpolating_function = art_disk_funct, halo_interpolating_function = art_halo_funct) 
+        corr_ra_one_pop_in_scale_radii,corr_dec_one_pop_in_scale_radii = distributeRandomStars(len(star_data.corrRa),artificial_profile,400,400,withDisk)
+        corr_ra_one_pop = [RA * rs  / dist * 1 / deg_to_rad for RA in corr_ra_one_pop_in_scale_radii]
+        corr_dec_one_pop = [Dec * rs  / dist * 1 / deg_to_rad for Dec in corr_dec_one_pop_in_scale_radii]
+        #print 'corr_ra_one_pop = '
+        #print corr_ra_one_pop
+        #print 'corr_dec_one_pop = '
+        #print corr_dec_one_pop 
+    else:
+        corr_ra_one_pop = star_data.corrRa
+        corr_dec_one_pop = star_data.corrDec
+    if len(fields_of_interest) > 0:
+        corr_ra_one_pop_untrimmed = corr_ra_one_pop[:]
+        corr_dec_one_pop_untrimmed = corr_dec_one_pop[:]
+        corr_ra_one_pop = []
+        corr_dec_one_pop = []
+        for i in range(len(fields)):
+            field = fields[i]
+            if field in fields_of_interest:
+                corr_ra_one_pop = corr_ra_one_pop + [corr_ra_one_pop_untrimmed[i]]
+                corr_dec_one_pop = corr_dec_one_pop + [corr_dec_one_pop_untrimmed[i]]
+                
+        
+    if show_stars:
+        
+        if disp_units == 'arcmin': 
+            axarr[axarr_indeces[0], axarr_indeces[1]].scatter(np.array(corr_ra_one_pop) * 60.0,np.array(corr_dec_one_pop) * 60.0 ,s=4.,color=colormap)
+        elif disp_units == 'degrees':
+            axarr[axarr_indeces[0], axarr_indeces[1]].scatter(corr_ra_one_pop, corr_dec_one_pop, s=4., color=colormap)
+        #axarr[axarr_indeces[0], axarr_indeces[1]].scatter(corr_ra_one_pop, corr_dec_one_pop) 
+
+    matplotlib.rcParams['xtick.direction'] = 'out'
+    matplotlib.rcParams['ytick.direction'] = 'out'
+
+    if disp_units == 'arcmin':
+        y_lims = y_lims_arcmin
+        x_lims = x_lims_arcmin
+    elif disp_units == 'degrees':
+        x_lims = [x_lim / 60.0 for x_lim in x_lims_arcmin]
+        y_lims = [y_lim / 60.0 for y_lim in y_lims_arcmin]
+        
+    axarr[axarr_indeces[0], axarr_indeces[1]].ylim = y_lims #ylimits from Walker plot
+    axarr[axarr_indeces[0], axarr_indeces[1]].xlim = x_lims #xlimits from Walker plot
+
+    matplotlib.rcParams.update({'font.size': 12})
+    #axarr[axarr_indeces[0], axarr_indeces[1]].set_xlabel('ra sep')
+    #axarr[axarr_indeces[0], axarr_indeces[1]].set_ylabel('dec sep')
+    if plot_title is None:
+        plot_title = 'Fornax Stars Position on Sky'
+    #axarr[axarr_indeces[0], axarr_indeces[1]].set_title(plot_title)
+    pltFileDir = computational_params_archive.getPlotDir() 
+    #Uncomment the following line if you want to save the file
+    
+    #axarr[axarr_indeces[0], axarr_indeces[1]].axis('scaled')
+    axarr[axarr_indeces[0], axarr_indeces[1]].axis(x_lims + y_lims) #combined limits from Walker plot
+    if show: 
+        plt.show()
+    if save: 
+        axarr[axarr_indeces[0], axarr_indeces[1]].savefig(pltFileDir + fig_name)
+    if return_prof:
+        if show_contours:
+            return dsph_brightness_profile
+        else:
+            print 'No contour profile generated, so no profile to return. '
+    else:
+        return 1

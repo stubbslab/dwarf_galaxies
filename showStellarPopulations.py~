@@ -1,0 +1,25 @@
+import math 
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
+from logList import logList
+from ObservedGalaxyStarData import ObservedGalaxyStarData
+
+def showMultipleDSphPopulations(galaxy,pops_to_show,pop_selection_method = 'none',x_lims_arcmin = [-60,60], y_lims_arcmin = [-60,60], disp_units = 'arcmin'):
+    star_data = ObservedGalaxyStarData(population, pop_selection_method = pop_selection_method)
+    f, axarray = plt.subplots(2,2,sharex='col',sharey='row')
+    for i in range(len(pops_to_show)):
+        pop = pops_to_show[i]
+        colormap = 'b' if pop_of_interest == 'MP' else 'g' if pop_of_interest == 'IM' else 'r' if pop_of_interest == 'MR' else 'black'
+        star_data = ObservedGalaxyStarData([galaxy,pop], pop_selection_method = pop_selection_method)
+        corr_ra_one_pop = star_data.corrRa
+        corr_dec_one_pop = star_data.corrDec
+        if disp_units == 'arcmin':
+            axarr[i / 2, i %2].scatter(corr_ra_one_pop * 60.0, corr_dec_one_pop * 60.0, s=4.0, color=colormap)
+        elif disp_units == 'degrees':
+            axarr[i / 2, i % 2].scatter(corr_ra_one_pop,corr_dec_one_pop)
+        axarr[i / 2, i % 2].scatter('Stars in Fornax in population ' + pop)
+    return 0        
+    
+

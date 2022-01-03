@@ -1,0 +1,18 @@
+from runMCMCForDwarfGalaxyProfiles import runMCMCForDwarfGalaxyProfiles
+from PotentialFunctionArray import PotentialFunctionArray 
+
+if __name__ == '__main__':
+    parameter_series = [ [0.2,0.1,['fornax','MP'],10000,'metal_point'],
+                         [0.3,0.1,['fornax','MP'],10000,'metal_point'],
+                         [0.4,0.1,['fornax','MP'],10000,'metal_point'],
+                         [0.5,0.1,['fornax','MR'],10000,'metal_point'],
+                         [0.2,0.1,['fornax','MR'],10000,'metal_point'],
+                         [0.3,0.1,['fornax','MR'],10000,'metal_point'], 
+                         [0.4,0.1,['fornax','MR'],10000,'metal_point'],  
+                         [0.5,0.1,['fornax','MR'],10000,'metal_point']  ]
+    pot_dir = '/Users/sasha/Documents/Harvard/physics/randall/potential_tables/'
+    disk_file = 'disk_pot_lambda_1_10_master3.csv'
+    print 'reading in disk potential file from: ' + pot_dir + disk_file 
+    disk_funct = PotentialFunctionArray(pot_dir + disk_file)
+    for i in range(len(parameter_series)):
+        runMCMCForDwarfGalaxyProfilesAllPops(parameter_series[i][0], parameter_series[i][1], parameter_series[i][2], disk_funct = disk_funct, halo_funct = 0, withDisk=0, nIterations = parameter_series[i][3], saverun = 1, show_best_fit = 0, pop_selection_method = parameter_series[i][4])

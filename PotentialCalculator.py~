@@ -1,0 +1,77 @@
+from HaloFunctionComponents import HaloFunctionComponents 
+import numpy as np
+import scipy.integrate as integrate 
+
+
+class CylindricalPotentialCaculator:
+
+    #Assume R, z passed as points on a mesh 
+    def getDPhiDZ(self, R, z):
+        raw_tauc = self.tauc_funct(R,z)
+        tauc = np.where(raw_tauc > 0.0, raw_tauc, 0.0)
+        raw_dtauc_dz = self.dtauc_dz_funct(R, z)
+        dtauc_dz = np.where(tauc > 0.0, raw_dtauc_dz * ( (tauc + 1.0) ** 2.0 * (tauc + self.el ** 2.0) ) ** -0.5, 0.0)
+        mass_int_bounds = [self.c, np.sqrt(R ** 2.0 / (self.rs ** 2.0 * (1.0 + tauc)) + z ** 2.0 / (self.rs ** 2.0 * (self.el ** 2.0 + tauc))) ]
+
+        mass_int = self.mass_int_funct (mass_int_bounds[1]) - self.mass_int_funct (mass_int_bounds[0])
+
+        term1 = np.where(R ** 2.0 + z ** 2.0 > 0.0, dtauc_dz * ((tauc  + 1) ** 2.0 * (tauc + self.el ** 2.0)) ** -0.5 * mass_int, 0.0) 
+
+        if len(np.shape(term1)) == 0:
+            term2 = - integrate.quad (lambda tau: ((tau  + 1) ** 2.0 * (tau + self.el ** 2.0)) ** -0.5 * z / (self.rs ** 2.0 * (tau + self.el ** 2.0) ) * self.mass_funct(np.sqrt(R ** 2.0 / (self.rs ** 2.0 * (1.0 + tau)) + z ** 2.0 / (self.rs ** 2.0 * (self.el ** 2.0 + tau)) )), tauc, np.inf )[0]
+        else:
+            term2 = np.zeros(np.shape(term1))
+            for i in range(np.shape(term2)[0]):
+                for j in range(np.shape(term1)[1]):
+                    ind_R = R[i][j]
+                    ind_z = z[i][j]
+                    ind_tauc = tauc[i][j]
+                    int_res =   - integrate.quad (lambda tau: ((tau  + 1) ** 2.0 * (tau + self.el ** 2.0)) ** -0.5 * ind_z / (self.rs ** 2.0 * (tau + self.el ** 2.0) ) * self.mass_funct(np.sqrt(ind_R ** 2.0 / (self.rs ** 2.0 * (1.0 + tau)) + ind_z ** 2.0 / (self.rs ** 2.0 * (self.el ** 2.0 + tau)) )), ind_tauc, np.inf )[0]
+                    ind_term2 = int_res 
+                    term2[i][j] = ind_term2 
+
+        return -2.0 * np.pi * self.G * self.rs ** 2.0 * (term1 + term2) 
+
+    def getDeltaR(self, R, z): 
+
+        return 1 
+
+    def __init__(self, el, rs, M, c, halo_type):
+
+        self.el = el
+        self.rs = rs
+        self.c = c
+        self.M = M 
+        self.G = 1.0 #Newton's Constant 
+        self.halo_type = halo_type 
+        hfc = HaloFunctionComponents(halo_type, c, el, halo_interpolating_function = 'dummy')
+        halo_scaling = hfc.getOverallScaling() 
+        self.tauc_funct = lambda R, z: np.where((R ** 2.0 + z ** 2.0) > 0.0, - (1 + el ** 2.0) / 2.0 + 0.5 * ((1 - el) ** 2.0 + 4.0 * (rs * c) ** 2.0 / (R ** 2.0 + z ** 2.0)) ** 0.5, np.inf )
+        self.dtauc_dz_funct = lambda R, z: np.where((R ** 2.0 + z ** 2.0) > 0.0, -2.0 * rs ** 2.0 * c ** 2.0 * z / ((R ** 2.0 + z ** 2.0) ** 2.0 ) * ((1-el) ** 2.0 + (4.0 * rs ** 2.0 * c ** 2.0) / (R ** 2.0 + z ** 2.0)) ** (-0.5), np.inf )
+
+        mu_funct = lambda R, z: np.sqrt(R ** 2.0 + (z / self.el) ** 2.0) 
+
+        #mass_funct_int is: int d\mu \mu \rho(\mu), a term that shows up a lot 
+        if halo_type in ['NFW', 'nfw','Nfw']: #\rho(\mu') = M / (4 \pi Q rs ** 3.0) * 1.0 / f(c) * 1.0 / mu(R, z) * 1.0 / (1.0 + mu(R,z)) ** 2.0
+            self.mass_funct = lambda mu: halo_scaling * self.M / (4.0 * np.pi * self.el * self.rs ** 3.0) * mu ** (-1.0) * (1.0 + mu) ** (-2.0)
+            self.mass_int_funct = lambda mu: halo_scaling * self.M / (4.0 * np.pi * self.el * self.rs ** 3.0) * (-1.0 / (1.0 + mu) ** 2.0) 
+
+        elif halo_type in ['acored', 'Acored','ACORED']:
+            self.mass_funct = lambda mu: halo_scaling * self.M / (4.0 * np.pi * self.el * self.rs ** 3.0) * (1.0 + mu) ** (-3.0)
+            self.mass_int_funct = lambda mu: halo_scaling * self.M / (4.0 * np.pi * self.el * self.rs ** 3.0) * (-(2.0 * mu + 1)/ (2.0 * (1.0 + mu) ** 2.0)) 
+        
+        elif halo_type in ['burkert','Burkert', 'BURKERT']:
+            self.mass_funct = lambda mu: halo_scaling * self.M / (4.0 * np.pi * self.el * self.rs ** 3.0) * (1.0 + mu) ** (-1.0) * (1.0 + mu ** 2.0) ** (-1.0)
+            self.mass_int_funct = lambda mu: halo_scaling * self.M / (4.0 * np.pi * self.el * self.rs ** 3.0) * mu ** 3.0 / 3.0 + mu ** 2.0 / 2.0
+
+        elif halo_type in ['test', 'Test', 'TEST', 'uniform', 'Uniform', 'UNIFORM']:
+            halo_scaling = 1.0 
+            self.mass_funct = lambda mu: halo_scaling * self.M / (4.0 * np.pi * self.el * self.rs ** 3.0)
+            self.mass_int_funct = lambda mu: halo_scaling * self.M / (4.0 * np.pi * self.el * self.rs ** 3.0) * mu 
+
+        
+        
+        
+        
+
+        

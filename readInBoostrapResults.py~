@@ -1,0 +1,24 @@
+import numpy as np
+
+def unpackOneResultsSet(results):
+    
+
+def readInBoostrapResults(bootstrap_files):
+    n_items_per_halo = 3
+    name_index = 0
+    fit_params_index = 1
+    likelihood_index = 2
+    first_results_set = np.load(boostrap_files[0])
+    first_results = first_results_set[0]
+    
+    n_halos = len(first_results) / 6
+    halo_types = [first_results[name_index + n_items_per_halo * i] for i in range(n_halos) ]
+    dicts_by_halo = {}
+    for halo in halo_types:
+        dicts_by_halo[halo] = []
+    
+
+    all_results = [np.load(file) for file in boostrap_files]
+
+    sets_by_halo = {}
+    

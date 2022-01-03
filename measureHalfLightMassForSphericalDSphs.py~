@@ -1,0 +1,30 @@
+from ObservedGalaxyStarData import ObservedGalaxyStarData
+
+def measureHalfLightMassForSphericalDSphs(rs, M, c, profile, galaxy, populations, halo_model, pop_selection_method = 'metal_rigid'):
+    star_data_by_pop = []
+    G =  4.302 * 10 ** -3.0 #Newton's constant in pc (km/s)**2.0 / M_sun
+    walker_half_mass_estimator = lambda half_light_radius, sigsqr: 5.0 * half_light_radius * sigsqr / (2.0 * G)
+
+    if halo_model.lower() is 'nfw':
+        cut_function = lambda a: log(a + 1.0) - a / (1.0 + a)
+    elif halo_model.lower() is 'cored':
+        cut_function = lambda a: log(a + 1.0) - (3.0 * a ** 2.0 + 2.0 * a) / (2.0 * (1.0 + a) ** 2.0)
+    else halo_model.lower() is 'burkert':
+        cut_function = lambda a: 1.0 / 4.0 * (2.0 * math.log(1.0 + a) + math.log(1.0 + c ** 2.0) - 2.0 * math.atan(a) )
+    true_half_mass_funct = lambda half_light_radius: M / (4.0 * math.pi) * cut_function(half_light_radius / rs) / cut_function(c)
+
+    Walker_masses = []
+    true_masses = []
+    for pop in populations:
+        new_star_data = ObservedGalaxyStarData([galaxy, pop], pop_selection_method)
+        half_light_radius = new_star_data.half_light_rad
+        sig_sqr = new_star_data.sigSqr
+        walker_Mh = walker_Mh_estimator (half_light_radius, sig_sqr)
+        star_data_by_pop = star_data_by_pop + [new_star_data]
+
+        Walker_masses = Walker_masses + [walker_half_mass_estimator(half_light_radius, sig_sqr)]
+        true_masses = true_masses + [true_half_mass_funct(half_light_radius)]
+    return [Walker_masses, true_masses]
+
+        
+                

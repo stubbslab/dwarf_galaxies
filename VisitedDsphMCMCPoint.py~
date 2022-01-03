@@ -1,0 +1,9 @@
+from DwarfGalaxyParametersStorer import DwarfGalaxyParametersStorer
+
+class VisitedDsphMCMCPoint:
+
+    def __init__(self, parameter_storer,log_likelihood, n_visits):
+        self.parameter_storer = parameter_storer
+        self.log_likelihood = log_likelihood
+        self.n_visits = n_visits
+        

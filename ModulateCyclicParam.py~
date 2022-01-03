@@ -1,0 +1,7 @@
+import math
+
+def ModulateCyclicParam (cyclicParam,cyclicity):
+    if cyclicParam >= 0:
+        return cyclicParam % (cyclicity)
+    else:
+        return ModulateCyclicParam (cyclicParam + cyclicity, cyclicity) 

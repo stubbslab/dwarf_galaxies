@@ -1,0 +1,57 @@
+import math
+
+class StartMCMCParameterStorer:
+
+    def getStartParameters(index, withDisk = 0):
+        if withDisk:
+            return self.startParametersWithDisk[index]
+	else:
+	    return self.starParametersWithoutDisk[index]
+
+    def __init__(self):
+        # rs, phi
+        startParametersWithDisk = [[150, math.pi * 0.0],
+	                           [500, math.pi * 0.0],
+				   [850, math.pi * 0.0],
+				   [150, math.pi * 0.5],
+	                           [500, math.pi * 0.5],
+				   [850, math.pi * 0.5]
+	                           ]
+	# rs, phi, eps, a
+	startParametersWithoutDisk = [[150, math.pi * 0.0, 0.0, math.pi*0.0 ],
+	                              [500, math.pi * 0.0, 0.0, math.pi*0.0 ],
+				      [850, math.pi * 0.0, 0.0, math.pi*0.0 ],
+				      [150, math.pi * 0.5, 0.0, math.pi*0.0 ],
+	                              [500, math.pi * 0.5, 0.0, math.pi*0.0 ],
+				      [850, math.pi * 0.5, 0.0, math.pi*0.0 ],
+				      [150, math.pi * 0.0, 0.1, math.pi*0.0 ],
+	                              [500, math.pi * 0.0, 0.1, math.pi*0.0 ],
+				      [850, math.pi * 0.0, 0.1, math.pi*0.0 ],
+				      [150, math.pi * 0.5, 0.1, math.pi*0.0 ],
+	                              [500, math.pi * 0.5, 0.1, math.pi*0.0 ],
+				      [850, math.pi * 0.5, 0.1, math.pi*0.0 ],
+				      [150, math.pi * 0.0, 0.2, math.pi*0.0 ],
+	                              [500, math.pi * 0.0, 0.2, math.pi*0.0 ],
+				      [850, math.pi * 0.0, 0.2, math.pi*0.0 ],
+				      [150, math.pi * 0.5, 0.2, math.pi*0.0 ],
+	                              [500, math.pi * 0.5, 0.2, math.pi*0.0 ],
+				      [850, math.pi * 0.5, 0.2, math.pi*0.0 ],
+				      [150, math.pi * 0.0, 0.0, math.pi*0.5 ],
+	                              [500, math.pi * 0.0, 0.0, math.pi*0.5 ],
+				      [850, math.pi * 0.0, 0.0, math.pi*0.5 ],
+				      [150, math.pi * 0.5, 0.0, math.pi*0.5 ],
+	                              [500, math.pi * 0.5, 0.0, math.pi*0.5 ],
+				      [850, math.pi * 0.5, 0.0, math.pi*0.5 ],
+				      [150, math.pi * 0.0, 0.1, math.pi*0.5 ],
+	                              [500, math.pi * 0.0, 0.1, math.pi*0.5 ],
+				      [850, math.pi * 0.0, 0.1, math.pi*0.0 ],
+				      [150, math.pi * 0.5, 0.1, math.pi*0.5 ],
+	                              [500, math.pi * 0.5, 0.1, math.pi*0.5 ],
+				      [850, math.pi * 0.5, 0.1, math.pi*0.5 ],
+				      [150, math.pi * 0.0, 0.2, math.pi*0.5 ],
+	                              [500, math.pi * 0.0, 0.2, math.pi*0.5 ],
+				      [850, math.pi * 0.0, 0.2, math.pi*0.5 ],
+				      [150, math.pi * 0.5, 0.2, math.pi*0.5 ],
+	                              [500, math.pi * 0.5, 0.2, math.pi*0.5 ],
+				      [850, math.pi * 0.5, 0.2, math.pi*0.5 ]
+	                              ]

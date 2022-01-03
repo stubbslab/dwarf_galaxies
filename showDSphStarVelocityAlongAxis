@@ -1,0 +1,21 @@
+import math
+import numpy as np
+from AstronomicalParameterArchive import AstronomicalParameterArchive
+from ObservedGalaxyStarData import ObservedGalaxyStarData
+from logList import logList 
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
+
+from showDSphStarVelocityAlongAxis (population, rot_plane_angle, pop_selection_method = 'none'):
+    astro_archive = AstronomicalParameterArchive ()
+    star_data = ObservedGalaxyStarData(population, pop_selection_method = pop_selection_method)
+    corr_ra = star_data.corrRA
+    corr_dec = star_data.corrDec
+    Vhel = star_data.Vhel
+    VhelE = star_data.VhelE
+    dist_along_rot_plane = [math.cos(rot_plane_angle) * corr_ra[i] + math.sin(rot_plane_angle) * corr_dec[i] for i in range(len(corr_ra)) ]
+    dist_perp_rot_plane = [-math.sin(rot_plane_angle) * corr_ra[i] + math.cos(rot_plane_angle) * corr_dec[i] for i in range(len(corr_dec)) ]
+    plt.errorbar(dist_along_rot_plane, Vhel, yerr = VhelE, linestyle = 'None')
+    plt.show() 
+    
